@@ -1,48 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:weather_app/cubits/weather_cubit/weather_cubit.dart';
+import 'package:weather_app/cubits/weather_cubit/weather_state.dart';
 import 'package:weather_app/pages/search.dart';
-import '../model/weather_model.dart';
-import '../providers/provider.dart';
 import 'sub_home.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class Home extends StatefulWidget {
+class Home extends StatelessWidget {
   const Home({super.key});
   @override
-  State<Home> createState() => _HomeState();
-}
-
-WeatherModel? weatherData;
-
-class _HomeState extends State<Home> {
-  @override
   Widget build(BuildContext context) {
-    weatherData = Provider.of<WeatherProvider>(context).weatherData;
     return Scaffold(
-      appBar: weatherData == null
-          ? AppBar(
-              title: const Text('Weather App'),
-              actions: [
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                      return const Search();
-                    }));
-                  },
-                  icon: const Icon(Icons.search),
-                ),
-              ],
-            )
-          : null,
-      body: weatherData == null
-          ? const Center(
-              child: Text(
-                'There Is No Weather 😢 Start Searching Now🔍',
-                style: TextStyle(fontSize: 20),
-                textAlign: TextAlign.center,
-              ),
-            )
-          : const SubHome(),
+      appBar:
+          AppBar(centerTitle: true, title: const Text('Weather App'), actions: [
+        IconButton(
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) {
+              return const Search();
+            }));
+          },
+          icon: const Icon(Icons.search),
+        ),
+      ]),
+      body: BlocBuilder<WeatherCubit, WeatherState>(
+        builder: (context, state) {
+          if (state is Loading) {
+            return const Center(child: RefreshProgressIndicator());
+          } else if (state is Success) {
+            return const SubHome();
+          } else if (state is Failure) {
+            return const Center(child: Text('Faild'));
+          }
+          return const Center(
+            child: Text(
+              'There Is No Weather 😢 Start Searching Now🔍',
+              style: TextStyle(fontSize: 20),
+              textAlign: TextAlign.center,
+            ),
+          );
+        },
+      ),
     );
   }
 }

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:weather_app/model/weather_model.dart';
-import 'package:weather_app/pages/home.dart';
-import '../providers/provider.dart';
-import '../services/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:weather_app/cubits/weather_cubit/weather_cubit.dart';
 
 class Search extends StatefulWidget {
   const Search({super.key});
@@ -11,6 +8,8 @@ class Search extends StatefulWidget {
   @override
   State<Search> createState() => _SearchState();
 }
+
+GlobalKey<FormState> keyForm = GlobalKey();
 
 class _SearchState extends State<Search> {
   @override
@@ -20,47 +19,44 @@ class _SearchState extends State<Search> {
       appBar: AppBar(
         title: const Text('Search A City'),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(colors: [Colors.red, Colors.purple]),
-        ),
+      body: Form(
+        key: keyForm,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TextField(
+            child: TextFormField(
               onChanged: (value) {
                 cityName = value;
               },
-              onSubmitted: (value) async {
-                cityName = value;
-                Services service = Services();
-                WeatherModel? weather =
-                    await service.setServices(cityName: cityName!);
-                // ignore: use_build_context_synchronously
-                Provider.of<WeatherProvider>(context, listen: false)
-                    .weatherData = weather;
-                // ignore: use_build_context_synchronously
-                // weatherData?.city == null
-                //     ?
-                //     :
-                Navigator.pop(context);
+              validator: (value) {
+                if (value!.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Please Enter City or countery')));
+                  return 'Please Enter City or countery';
+                }
+                return null;
+              },
+              onFieldSubmitted: (value) async {
+                if (keyForm.currentState!.validate()) {
+                  cityName = value;
+
+                  if (cityName!.isNotEmpty) {
+                    BlocProvider.of<WeatherCubit>(context)
+                        .getWeather(cityName: cityName!);
+                    Navigator.pop(context);
+                  }
+                }
               },
               decoration: InputDecoration(
                 hintText: 'Enter City',
-                hintStyle: const TextStyle(color: Colors.white),
-                labelStyle: const TextStyle(color: Colors.white),
                 border: const OutlineInputBorder(),
                 prefixIcon: GestureDetector(
                     onTap: () async {
-                      // cityName = value;
-                      Services service = Services();
-                      WeatherModel? weather =
-                          await service.setServices(cityName: cityName!);
-                      // ignore: use_build_context_synchronously
-                      Provider.of<WeatherProvider>(context, listen: false)
-                          .weatherData = weather;
-                      // ignore: use_build_context_synchronously
-                      Navigator.pop(context);
+                      if (keyForm.currentState!.validate()) {
+                        BlocProvider.of<WeatherCubit>(context)
+                            .getWeather(cityName: cityName!);
+                        Navigator.pop(context);
+                      }
                     },
                     child: const Icon(Icons.search)),
                 labelText: 'Search',

@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class WeatherModel {
   String? city;
   String? country;
